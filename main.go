@@ -4,13 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/GrzegorzMika/budget/templates"
 	"github.com/a-h/templ"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+var categories = []string{"Środki czystości", "Spożywcze", "Odzież i obuwie", "Rozrywka", "Gastronomia", "Kosmetyki", "Edukacja", "Transport", "Zdrowie"}
 
 var createTable = `CREATE TABLE IF NOT EXISTS expenses (
 	timestamp TIMESTAMP WITH TIMEZONE,
@@ -55,10 +59,11 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	component := index()
+	slices.Sort(categories)
+	component := templates.Index(categories)
 	http.Handle("/", templ.Handler(component))
 	http.HandleFunc("/expenses", expensesHandlerBuilder(db))
+	http.Handle("/static/", http.FileServer(http.FS(templates.Static)))
 
 	fmt.Println("Listening on :3000")
 	fmt.Println(http.ListenAndServe(":3000", nil))

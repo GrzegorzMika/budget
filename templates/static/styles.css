@@ -11,7 +11,7 @@ html {
 }
 
 body {
-    font-family: "Rubik", sans-serif;
+    font-family: "Poppins", serif;
     line-height: 1;
     font-weight: 400;
     color: #555;
@@ -23,6 +23,7 @@ body {
 }
 
 .header-primary {
+    font-family: "Sixtyfour", serif;
     font-size: 4rem;
     font-weight: 700;
     margin: 2rem;
@@ -71,7 +72,7 @@ body {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    font-size: 1.5rem;
+    font-size: 2.5rem;
     font-weight: 700;
 }
 

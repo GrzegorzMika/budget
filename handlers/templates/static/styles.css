@@ -11,7 +11,7 @@ html {
 }
 
 body {
-    font-family: "Poppins", serif;
+    font-family: "DM Serif Text", serif;
     line-height: 1;
     font-weight: 400;
     color: #555;
@@ -23,7 +23,7 @@ body {
 }
 
 .header-primary {
-    font-family: "Sixtyfour", serif;
+    font-family: "DM Serif Text", serif;
     font-size: 4rem;
     font-weight: 700;
     margin: 2rem;
@@ -35,7 +35,7 @@ body {
     flex-direction: column;
     gap: 1rem;
     font-size: 3rem;
-    width: 80%
+    width: 75%
 }
 
 .expenses-entry {

@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: 'postgres:15'
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=budget
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: "pg_isready --quiet"
+      start_period: 5s
+      interval: 5s
+      timeout: 2s
+      retries: 5

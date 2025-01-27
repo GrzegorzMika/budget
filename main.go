@@ -36,6 +36,8 @@ func main() {
 	http.Handle("/", handlers.LandingPageHandlerBuilder(app))
 	http.HandleFunc("/expenses", handlers.ExpensesHandlerBuilder(app))
 	http.Handle("/static/", handlers.StaticFileHandlerBuilder(app))
+	http.Handle("/healthz", handlers.HealthcheckHandlerBuilder(app))
+	http.Handle("/readyz", handlers.HealthcheckHandlerBuilder(app))
 
 	fmt.Println("Listening on :3000")
 	fmt.Println(http.ListenAndServe(":3000", nil))

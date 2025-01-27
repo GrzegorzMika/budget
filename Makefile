@@ -1,4 +1,12 @@
-compile:
-	templ generate && env CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 go build -v -o ./build .
+build_docker_image:
+	docker build -t ghcr.io/grzegorzmika/budget_app:v0.1 .
+	echo $CR_PAT | docker login ghcr.io -u grzegorzmika --password-stdin
+	docker push ghcr.io/grzegorzmika/budget_app:v0.1
 
-PHONY: compile
+compile:
+	GOOS=linux GOARCH=arm64 go build -o ./build/budget_app main.go
+
+deploy:
+	scp ./build/budget_app  grzegorzmika@berry1:/home/grzegorzmika/budget_app
+
+PHONY: compile deploy

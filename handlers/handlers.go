@@ -55,3 +55,18 @@ func LandingPageHandlerBuilder(_ *controllers.AppController) *templ.ComponentHan
 func StaticFileHandlerBuilder(_ *controllers.AppController) http.Handler {
 	return http.FileServer(http.FS(templates.Static))
 }
+
+func HealthcheckHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			err := app.Ping(r.Context())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}

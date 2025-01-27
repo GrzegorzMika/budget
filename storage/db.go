@@ -30,3 +30,9 @@ func (r *Repository) SaveExpense(ctx context.Context, expense *domain.Expense) e
 	}
 	return nil
 }
+
+func (r *Repository) Ping(ctx context.Context) error {
+	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
+	defer cancel()
+	return r.db.Ping(newCtx)
+}

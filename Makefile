@@ -1,7 +1,7 @@
 build_docker_image:
-	docker build -t ghcr.io/grzegorzmika/budget_app:v0.1 .
-	echo $CR_PAT | docker login ghcr.io -u grzegorzmika --password-stdin
-	docker push ghcr.io/grzegorzmika/budget_app:v0.1
+	docker build -t gregmika/budget_app:v0.3 .
+	docker login -u gregmika --password-stdin
+	docker push gregmika/budget_app:v0.3
 
 compile:
 	GOOS=linux GOARCH=arm64 go build -o ./build/budget_app main.go

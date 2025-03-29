@@ -13,3 +13,20 @@ services:
       interval: 5s
       timeout: 2s
       retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/budget?sslmode=disable
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
+      start_period: 5s
+      interval: 5s
+      timeout: 2s
+      retries: 5

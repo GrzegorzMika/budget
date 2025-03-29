@@ -23,6 +23,7 @@ const (
 	ExpenseCategoryCar              ExpenseCategory = "Samochód"
 	ExpenseCategoryWedding          ExpenseCategory = "Ślub"
 	ExpenseCategoryHygieneProducts  ExpenseCategory = "Artykuły higieniczne"
+	ExpenseCategoryOtherServices    ExpenseCategory = "Inne usługi"
 	// Add more categories as needed...
 )
 
@@ -45,6 +46,7 @@ var ExpenseCategories = []ExpenseCategory{
 	ExpenseCategoryCar,
 	ExpenseCategoryWedding,
 	ExpenseCategoryHygieneProducts,
+	ExpenseCategoryOtherServices,
 }
 
 type Expense struct {

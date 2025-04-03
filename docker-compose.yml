@@ -14,19 +14,28 @@ services:
       timeout: 2s
       retries: 5
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    depends_on:
-      - postgres
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.4
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/budget?sslmode=disable
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
-      start_period: 5s
-      interval: 5s
-      timeout: 2s
-      retries: 5
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=password
+    ports:
+      - "8080:8080"
+    command: "start-dev"
+
+  # app:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - DATABASE_URL=postgres://postgres:postgres@postgres:5432/budget?sslmode=disable
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
+  #     start_period: 5s
+  #     interval: 5s
+  #     timeout: 2s
+  #     retries: 5

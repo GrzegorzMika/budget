@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/GrzegorzMika/budget/controllers"
 	"github.com/GrzegorzMika/budget/handlers"
 	"github.com/GrzegorzMika/budget/migrations"
 	"github.com/GrzegorzMika/budget/storage"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/pprof"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -33,12 +36,19 @@ func main() {
 
 	app := controllers.NewAppController(storage.NewRepository(pool))
 
-	http.Handle("/", handlers.LandingPageHandlerBuilder(app))
-	http.HandleFunc("/expenses", handlers.ExpensesHandlerBuilder(app))
-	http.Handle("/static/", handlers.StaticFileHandlerBuilder(app))
-	http.Handle("/healthz", handlers.HealthcheckHandlerBuilder(app))
-	http.Handle("/readyz", handlers.HealthcheckHandlerBuilder(app))
+	api := fiber.New()
+
+	api.Use(cors.New())
+	api.Use(logger.New())
+	api.Use(pprof.New())
+	api.Use(handlers.AuthMiddleware())
+
+	api.Get("/healthz", handlers.HealthcheckHandlerBuilder(app))
+	api.Get("/readyz", handlers.HealthcheckHandlerBuilder(app))
+
+	api.Get("/categories", handlers.ExpenseCategoryHandlerBuilder(app))
+	api.Post("/expenses", handlers.ExpensesHandlerBuilder(app))
 
 	fmt.Println("Listening on :3000")
-	fmt.Println(http.ListenAndServe(":3000", nil))
+	fmt.Println(api.Listen("0.0.0.0:3000"))
 }

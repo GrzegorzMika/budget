@@ -12,11 +12,11 @@ jobs:
       matrix:
         service: [backend, frontend]
         include:
-          - service: backend
+          - service: budget-backend
             dockerfile: backend/Dockerfile
             context: backend
             build_args: "" # Add any backend specific build arguments here
-          - service: frontend
+          - service: budget-frontend
             dockerfile: frontend/Dockerfile
             context: frontend
             build_args: PUBLIC_API_URL=https://api.budget.gregdev.dev # Add any frontend specific build arguments here

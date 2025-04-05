@@ -1,4 +1,4 @@
-FROM node:23-alpine AS base
+FROM node:23-slim AS base
 
 ARG PUBLIC_API_URL
 ENV PUBLIC_API_URL=$PUBLIC_API_URL
@@ -6,16 +6,19 @@ ENV PUBLIC_API_URL=$PUBLIC_API_URL
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-WORKDIR /app
 COPY . /app
+WORKDIR /app
 
 FROM base AS prod-deps
-RUN pnpm install --prod --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
 FROM base AS build
-RUN pnpm install --frozen-lockfile && pnpm run build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build
 
 FROM node:23-alpine AS prod
+COPY --from=prod-deps /app/node_modules /app/node_modules
+COPY --from=build /app/.svelte-kit/output/server /app/.svelte-kit/output/server
 
 ENV PORT=8080
 EXPOSE 8080
@@ -23,9 +26,4 @@ EXPOSE 8080
 RUN apk add curl
 
 USER 10001:10001
-WORKDIR /app
-COPY --from=prod-deps /app/node_modules /app/node_modules
-COPY --from=build /app/build /app/build
-COPY package.json /app
-
-CMD [ "node", "./build/index.js" ]
+CMD [ "pnpm", "start" ]

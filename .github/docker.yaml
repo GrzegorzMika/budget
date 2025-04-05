@@ -1,0 +1,53 @@
+name: Build and Push Docker Images on Tag Push
+
+on:
+  push:
+    tags:
+      - '*' # Trigger on any new tag push
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, frontend]
+        include:
+          - service: backend
+            dockerfile: backend/Dockerfile
+            context: backend
+            build_args: "" # Add any backend specific build arguments here
+          - service: frontend
+            dockerfile: frontend/Dockerfile
+            context: frontend
+            build_args: PUBLIC_API_URL=https://api.budget.gregdev.dev # Add any frontend specific build arguments here
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to get the tag name
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract tag name
+        id: extract_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image for ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          dockerfile: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.build_args }}
+          push: true
+          tags: |
+            gregmika/${{ matrix.service }}:${{ steps.extract_tag.outputs.TAG_NAME }}
+            gregmika/${{ matrix.service }}:latest # Optionally tag as latest as well

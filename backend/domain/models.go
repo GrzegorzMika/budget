@@ -1,6 +1,11 @@
 package domain
 
-import "time"
+import (
+	"encoding/json"
+	"strconv"
+	"strings"
+	"time"
+)
 
 type ExpenseCategory string
 
@@ -53,4 +58,27 @@ type Expense struct {
 	Timestamp time.Time
 	Amount    float64
 	Category  ExpenseCategory
+}
+
+func (e *Expense) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		Timestamp string `json:"timestamp"`
+		Amount    string `json:"amount"`
+		Category  string `json:"category"`
+	}{}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	timestamp, err := time.Parse(time.DateOnly, aux.Timestamp)
+	if err != nil {
+		return err
+	}
+	e.Timestamp = timestamp
+	amount, err := strconv.ParseFloat(strings.TrimSpace(aux.Amount), 64)
+	if err != nil {
+		return err
+	}
+	e.Amount = amount
+	e.Category = ExpenseCategory(aux.Category)
+	return nil
 }

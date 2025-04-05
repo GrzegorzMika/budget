@@ -1,2 +1,11 @@
 node_modules/
 build/
+frontend/node_modules
+
+# Output
+frontend/.output
+frontend/.vercel
+frontend/.netlify
+frontend/.wrangler
+frontend/.svelte-kit
+frontend/build

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [backend, frontend]
+        service: [budget-backend, budget-frontend]
         include:
           - service: budget-backend
             dockerfile: backend/Dockerfile

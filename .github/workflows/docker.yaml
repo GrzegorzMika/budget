@@ -13,11 +13,9 @@ jobs:
         service: [backend, frontend]
         include:
           - service: budget-backend
-            dockerfile: backend/Dockerfile
             context: backend
             build_args: "" # Add any backend specific build arguments here
           - service: budget-frontend
-            dockerfile: frontend/Dockerfile
             context: frontend
             build_args: PUBLIC_API_URL=https://api.budget.gregdev.dev # Add any frontend specific build arguments here
 
@@ -42,12 +40,11 @@ jobs:
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image for ${{ matrix.service }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          dockerfile: ${{ matrix.dockerfile }}
           build-args: ${{ matrix.build_args }}
           push: true
           tags: |
             gregmika/${{ matrix.service }}:${{ steps.extract_tag.outputs.TAG_NAME }}
-            gregmika/${{ matrix.service }}:latest # Optionally tag as latest as well
+            gregmika/${{ matrix.service }}:latest

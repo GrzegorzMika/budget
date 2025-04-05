@@ -8,13 +8,11 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwt"
 )
 
-const jwksURL = `http://127.0.0.1:8080/realms/budget/protocol/openid-connect/certs`
-
 type AuthorizationHeader struct {
 	Bearer string `header:"Authorization"`
 }
 
-func AuthMiddleware() fiber.Handler {
+func AuthMiddleware(jwksURL string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		authHeader := new(AuthorizationHeader)
 		if err := c.Bind().Header(authHeader); err != nil {

@@ -38,10 +38,12 @@ func main() {
 
 	api := fiber.New()
 
-	api.Use(cors.New())
+	api.Use(cors.New(
+		cors.Config{AllowOrigins: []string{os.Getenv("CORS_ALLOW_ORIGINS")}},
+	))
 	api.Use(logger.New())
 	api.Use(pprof.New())
-	api.Use(handlers.AuthMiddleware())
+	api.Use(handlers.AuthMiddleware(os.Getenv("JWKS_URL")))
 
 	api.Get("/healthz", handlers.HealthcheckHandlerBuilder(app))
 	api.Get("/readyz", handlers.HealthcheckHandlerBuilder(app))

@@ -24,7 +24,7 @@
 
 {#if !token}
 	<div class="flex h-screen w-screen items-center justify-center">
-		<Circle3 size="300" unit="px" duration="3s" />
+		<Circle3 size="500" unit="px" duration="3s" />
 	</div>
 {:else}
 	<div class="container">

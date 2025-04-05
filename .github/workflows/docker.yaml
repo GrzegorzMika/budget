@@ -13,9 +13,11 @@ jobs:
         service: [backend, frontend]
         include:
           - service: budget-backend
+            dockerfile: backend/Dockerfile
             context: backend
             build_args: "" # Add any backend specific build arguments here
           - service: budget-frontend
+            dockerfile: frontend/Dockerfile
             context: frontend
             build_args: PUBLIC_API_URL=https://api.budget.gregdev.dev # Add any frontend specific build arguments here
 
@@ -43,8 +45,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           build-args: ${{ matrix.build_args }}
           push: true
           tags: |
             gregmika/${{ matrix.service }}:${{ steps.extract_tag.outputs.TAG_NAME }}
-            gregmika/${{ matrix.service }}:latest
+            gregmika/${{ matrix.service }}:latest 

@@ -1,7 +1,6 @@
 build_docker_image:
-	docker build -t gregmika/budget_app:v0.3 .
-	docker login -u gregmika --password-stdin
-	docker push gregmika/budget_app:v0.3
+	docker build -t registry.gregdev.dev/library/budget_app:v0.4 .
+	docker push registry.gregdev.dev/library/budget_app:v0.4
 
 compile:
 	GOOS=linux GOARCH=arm64 go build -o ./build/budget_app main.go

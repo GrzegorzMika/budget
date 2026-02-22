@@ -1,0 +1,37 @@
+package templates
+
+templ Layout(activeTab string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet"/>
+			<link rel="stylesheet" href="/assets/styles.css"/>
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+			<title>Expenses</title>
+		</head>
+		<body>
+			<div class="app-layout">
+				<aside class="sidebar">
+					<div class="app-badge">
+						<h1 class="header-primary">Expenses</h1>
+					</div>
+					<nav class="side-tabs">
+						<a href="/?tab=expense" class={ "side-tab", templ.KV("active-tab", activeTab == "expense") }>New Expense</a>
+						<a href="/?tab=categories" class={ "side-tab", templ.KV("active-tab", activeTab == "categories") }>Categories</a>
+						<a href="/?tab=summary" class={ "side-tab", templ.KV("active-tab", activeTab == "summary") }>Summary</a>
+					</nav>
+				</aside>
+
+				<main class="main-content">
+					<div class="content-card">
+						{ children... }
+					</div>
+				</main>
+			</div>
+		</body>
+	</html>
+}

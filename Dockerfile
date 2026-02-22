@@ -1,4 +1,4 @@
-FROM golang:1.25.6 AS development
+FROM golang:1.26.0 AS development
 
 WORKDIR /budget
 
@@ -7,10 +7,11 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ./build/budget ./main.go
+ARG GOARCH=arm64
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./build/budget ./main.go
 RUN chmod a+x /budget
 
-FROM golang:1.25.6-alpine3.22 AS app
+FROM alpine:3.23.3 AS app
 
 EXPOSE 3000
 

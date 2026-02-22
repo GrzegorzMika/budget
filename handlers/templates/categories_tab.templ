@@ -1,0 +1,28 @@
+package templates
+
+templ CategoriesTab(categories []string) {
+	<div class="categories-container">
+		<h2 class="section-title">Manage Categories</h2>
+		<ul class="category-list">
+			for _, category := range categories {
+				<li class="category-item">
+					<span class="category-name">{ category }</span>
+					<button 
+						class="delete-button" 
+						title="Delete category"
+						hx-delete={ "/categories?category=" + category }
+						hx-target="closest li"
+						hx-swap="outerHTML"
+						hx-confirm="Are you sure you want to delete this category?"
+					>✖</button>
+				</li>
+			}
+		</ul>
+
+		<form action="/categories" method="POST" class="add-category-form" onsubmit="return confirm('Are you sure you want to add this category?');">
+			<label for="new_category" class="sr-only">New Category</label>
+			<input type="text" id="new_category" name="new_category" placeholder="Add new category..." required/>
+			<button class="submit-button" title="Add">➕</button>
+		</form>
+	</div>
+}

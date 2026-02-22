@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -42,14 +41,76 @@ func ExpensesHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
 	}
 }
 
-func LandingPageHandlerBuilder(_ *controllers.AppController) *templ.ComponentHandler {
-	categories := make([]string, len(domain.ExpenseCategories))
-	for i, category := range domain.ExpenseCategories {
-		categories[i] = string(category)
+func LandingPageHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tab := r.URL.Query().Get("tab")
+		if tab == "" {
+			tab = "expense"
+		}
+
+		categories := app.GetCategories()
+		categoryStrings := make([]string, len(categories))
+		for i, category := range categories {
+			categoryStrings[i] = string(category)
+		}
+
+		var tabComponent templ.Component
+		switch tab {
+		case "categories":
+			tabComponent = templates.CategoriesTab(categoryStrings)
+		case "summary":
+			total, expenses, err := app.GetMonthlySummary(r.Context(), time.Now())
+			if err != nil {
+				http.Error(w, "Failed to load summary: " + err.Error(), http.StatusInternalServerError)
+				return
+			}
+			tabComponent = templates.SummaryTab(total, expenses)
+		default:
+			// Default to 'expense'
+			tab = "expense"
+			tabComponent = templates.ExpenseTab(categoryStrings)
+		}
+
+		templates.Layout(tab).Render(templ.WithChildren(r.Context(), tabComponent), w)
 	}
-	slices.Sort(categories)
-	component := templates.Index(categories)
-	return templ.Handler(component)
+}
+
+func AddCategoryHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			newCategory := strings.TrimSpace(r.FormValue("new_category"))
+			if newCategory != "" {
+				err := app.AddCategory(r.Context(), newCategory)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+			}
+			http.Redirect(w, r, "/?tab=categories", http.StatusSeeOther)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+func DeleteCategoryHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "DELETE" {
+			category := strings.TrimSpace(r.URL.Query().Get("category"))
+			if category == "" {
+				http.Error(w, "category is required", http.StatusBadRequest)
+				return
+			}
+			err := app.DeleteCategory(r.Context(), category)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
 }
 
 func StaticFileHandlerBuilder(_ *controllers.AppController) http.Handler {

@@ -2,3 +2,4 @@ node_modules/
 app.db
 docker-compose.yml
 Dockerfile
+.claude

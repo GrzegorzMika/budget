@@ -31,11 +31,28 @@ func main() {
 		panic(err.Error())
 	}
 
-	app := controllers.NewAppController(storage.NewRepository(pool))
+	repo := storage.NewRepository(pool)
+	categories, err := repo.GetCategories(ctx)
+	if err != nil {
+		panic(fmt.Errorf("failed to load categories: %w", err).Error())
+	}
 
-	http.Handle("/", handlers.LandingPageHandlerBuilder(app))
+	app := controllers.NewAppController(repo, categories)
+
+	http.HandleFunc("/", handlers.LandingPageHandlerBuilder(app))
 	http.HandleFunc("/expenses", handlers.ExpensesHandlerBuilder(app))
-	http.Handle("/static/", handlers.StaticFileHandlerBuilder(app))
+
+	addCategory := handlers.AddCategoryHandlerBuilder(app)
+	delCategory := handlers.DeleteCategoryHandlerBuilder(app)
+	http.HandleFunc("/categories", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "DELETE" {
+			delCategory(w, r)
+		} else {
+			addCategory(w, r)
+		}
+	})
+
+	http.Handle("/assets/", handlers.StaticFileHandlerBuilder(app))
 	http.Handle("/healthz", handlers.HealthcheckHandlerBuilder(app))
 	http.Handle("/readyz", handlers.HealthcheckHandlerBuilder(app))
 

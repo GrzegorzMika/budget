@@ -1,4 +1,4 @@
-FROM golang:1.26.0 AS development
+FROM golang:1.26.2 AS development
 
 WORKDIR /budget
 
@@ -9,9 +9,8 @@ COPY . .
 
 ARG GOARCH=arm64
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build -o ./build/budget ./main.go
-RUN chmod a+x /budget
 
-FROM alpine:3.23.3 AS app
+FROM gcr.io/distroless/static-debian12:nonroot AS app
 
 EXPOSE 3000
 

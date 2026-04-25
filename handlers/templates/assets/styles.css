@@ -303,3 +303,59 @@ body {
 .text-center {
 	text-align: center;
 }
+
+/* Responsive: collapse sidebar into a compact top bar */
+@media (max-width: 800px) {
+	body {
+		align-items: flex-start;
+	}
+
+	.app-layout {
+		flex-direction: column;
+		max-width: 100%;
+		min-height: 0;
+		gap: 12px;
+		padding: 12px;
+	}
+
+	.sidebar {
+		width: 100%;
+		flex-direction: row;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.app-badge {
+		padding: 8px 12px;
+		flex-shrink: 0;
+	}
+
+	.header-primary {
+		font-size: 1.1rem;
+	}
+
+	.side-tabs {
+		flex-direction: row;
+		flex: 1;
+		gap: 6px;
+	}
+
+	.side-tab {
+		padding: 0.5rem 0.4rem;
+		font-size: 0.85rem;
+	}
+
+	.content-card {
+		padding: 1rem;
+	}
+
+	.expenses-table th,
+	.expenses-table td {
+		padding: 8px 10px;
+	}
+
+	.total-bar {
+		font-size: 1rem;
+		padding: 12px 15px;
+	}
+}

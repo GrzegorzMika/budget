@@ -1,5 +1,7 @@
 package templates
 
+import "net/url"
+
 templ CategoriesTab(categories []string) {
 	<div class="categories-container">
 		<h2 class="section-title">Manage Categories</h2>
@@ -10,7 +12,7 @@ templ CategoriesTab(categories []string) {
 					<button 
 						class="delete-button" 
 						title="Delete category"
-						hx-delete={ "/categories?category=" + category }
+						hx-delete={ "/categories?category=" + url.QueryEscape(category) }
 						hx-target="closest li"
 						hx-swap="outerHTML"
 						hx-confirm="Are you sure you want to delete this category?"

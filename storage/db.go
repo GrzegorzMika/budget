@@ -81,7 +81,7 @@ func (r *Repository) DeleteCategory(ctx context.Context, name string) error {
 	return nil
 }
 
-func (r *Repository) GetMonthlyTotal(ctx context.Context, start time.Time, end time.Time) (float64, error) {
+func (r *Repository) GetTotal(ctx context.Context, start time.Time, end time.Time) (float64, error) {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
 
@@ -93,7 +93,7 @@ func (r *Repository) GetMonthlyTotal(ctx context.Context, start time.Time, end t
 	return total, nil
 }
 
-func (r *Repository) GetMonthlyExpenses(ctx context.Context, start time.Time, end time.Time) ([]*domain.Expense, error) {
+func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.Time) ([]*domain.Expense, error) {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
 

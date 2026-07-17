@@ -14,8 +14,8 @@ type Repository interface {
 	AddCategory(ctx context.Context, name string) error
 	DeleteCategory(ctx context.Context, name string) error
 	Ping(ctx context.Context) error
-	GetMonthlyTotal(ctx context.Context, start time.Time, end time.Time) (float64, error)
-	GetMonthlyExpenses(ctx context.Context, start time.Time, end time.Time) ([]*domain.Expense, error)
+	GetTotal(ctx context.Context, start time.Time, end time.Time) (float64, error)
+	GetExpenses(ctx context.Context, start time.Time, end time.Time) ([]*domain.Expense, error)
 }
 
 type AppController struct {
@@ -79,18 +79,14 @@ func (c *AppController) Ping(ctx context.Context) error {
 	return c.repository.Ping(ctx)
 }
 
-func (c *AppController) GetMonthlySummary(ctx context.Context, t time.Time) (float64, []*domain.Expense, error) {
-	// Calculate the start of the current month
-	start := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
-	// Calculate the start of the next month
-	end := start.AddDate(0, 1, 0)
-
-	total, err := c.repository.GetMonthlyTotal(ctx, start, end)
+// GetSummary returns the total and expense list for [start, end).
+func (c *AppController) GetSummary(ctx context.Context, start time.Time, end time.Time) (float64, []*domain.Expense, error) {
+	total, err := c.repository.GetTotal(ctx, start, end)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	expenses, err := c.repository.GetMonthlyExpenses(ctx, start, end)
+	expenses, err := c.repository.GetExpenses(ctx, start, end)
 	if err != nil {
 		return 0, nil, err
 	}

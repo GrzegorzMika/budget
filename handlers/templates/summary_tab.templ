@@ -5,10 +5,23 @@ import (
 	"github.com/GrzegorzMika/budget/domain"
 )
 
-templ SummaryTab(total float64, expenses []*domain.Expense) {
+templ SummaryTab(label string, from string, to string, total float64, expenses []*domain.Expense) {
 	<div class="summary-container">
-		<h2 class="section-title">Current Month Summary</h2>
-		
+		<h2 class="section-title">{ label }</h2>
+
+		<form method="GET" action="/" class="range-form">
+			<input type="hidden" name="tab" value="summary"/>
+			<div class="range-field">
+				<label for="from">From:</label>
+				<input type="date" id="from" name="from" value={ from } required/>
+			</div>
+			<div class="range-field">
+				<label for="to">To:</label>
+				<input type="date" id="to" name="to" value={ to } required/>
+			</div>
+			<button class="submit-button">Show</button>
+		</form>
+
 		<div class="total-bar">
 			<span class="total-label">Total Expenses:</span>
 			<span class="total-amount">{ fmt.Sprintf("%.2f", total) }</span>
@@ -26,7 +39,7 @@ templ SummaryTab(total float64, expenses []*domain.Expense) {
 				<tbody>
 					if len(expenses) == 0 {
 						<tr>
-							<td colspan="3" class="text-center">No expenses recorded this month.</td>
+							<td colspan="3" class="text-center">No expenses recorded in this period.</td>
 						</tr>
 					} else {
 						for _, exp := range expenses {

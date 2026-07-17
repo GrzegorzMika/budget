@@ -59,12 +59,28 @@ func LandingPageHandlerBuilder(app *controllers.AppController) http.HandlerFunc 
 		case "categories":
 			tabComponent = templates.CategoriesTab(categoryStrings)
 		case "summary":
-			total, expenses, err := app.GetMonthlySummary(r.Context(), time.Now())
+			now := time.Now()
+			monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			monthEnd := monthStart.AddDate(0, 1, -1)
+
+			from, fromGiven := parseDateParam(r, "from", monthStart)
+			to, toGiven := parseDateParam(r, "to", monthEnd)
+			if to.Before(from) {
+				from, to = to, from
+			}
+
+			label := "Current Month Summary"
+			if fromGiven || toGiven {
+				label = "Summary: " + from.Format(time.DateOnly) + " – " + to.Format(time.DateOnly)
+			}
+
+			// "to" is inclusive; the repository takes an exclusive upper bound
+			total, expenses, err := app.GetSummary(r.Context(), from, to.AddDate(0, 0, 1))
 			if err != nil {
-				http.Error(w, "Failed to load summary: " + err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Failed to load summary: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-			tabComponent = templates.SummaryTab(total, expenses)
+			tabComponent = templates.SummaryTab(label, from.Format(time.DateOnly), to.Format(time.DateOnly), total, expenses)
 		default:
 			// Default to 'expense'
 			tab = "expense"
@@ -73,6 +89,20 @@ func LandingPageHandlerBuilder(app *controllers.AppController) http.HandlerFunc 
 
 		templates.Layout(tab).Render(templ.WithChildren(r.Context(), tabComponent), w)
 	}
+}
+
+// parseDateParam reads a YYYY-MM-DD query parameter, falling back to def when
+// absent or malformed. The second result reports whether a valid value was given.
+func parseDateParam(r *http.Request, name string, def time.Time) (time.Time, bool) {
+	value := r.URL.Query().Get(name)
+	if value == "" {
+		return def, false
+	}
+	t, err := time.Parse(time.DateOnly, value)
+	if err != nil {
+		return def, false
+	}
+	return t, true
 }
 
 func AddCategoryHandlerBuilder(app *controllers.AppController) http.HandlerFunc {

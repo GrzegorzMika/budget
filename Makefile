@@ -1,6 +1,6 @@
 build_docker_image:
-	docker build -t registry.gregdev.dev/library/budget_app:v0.6 .
-	docker push registry.gregdev.dev/library/budget_app:v0.6
+	docker build -t registry.gregdev.dev/library/budget_app:v0.7 .
+	docker push registry.gregdev.dev/library/budget_app:v0.7
 
 compile:
 	GOOS=linux GOARCH=arm64 go build -o ./build/budget_app main.go

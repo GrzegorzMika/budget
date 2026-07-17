@@ -1,2 +1,26 @@
 node_modules/
 build/
+
+# Claude Agentic Framework
+.pnpm-store/
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+*.o
+*.so
+*.exe
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.env
+.env.local
+*.local
+*.log
+npm-debug.log*
+scratchpad/

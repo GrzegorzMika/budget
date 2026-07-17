@@ -424,6 +424,13 @@ body {
 	background-color: var(--bg-color);
 }
 
+.expense-note {
+	display: block;
+	font-size: 0.85rem;
+	color: var(--muted-color, #6b7480);
+	overflow-wrap: anywhere;
+}
+
 .text-center {
 	text-align: center;
 }

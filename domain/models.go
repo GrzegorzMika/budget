@@ -5,7 +5,8 @@ import "time"
 type ExpenseCategory string
 
 type Expense struct {
-	Timestamp time.Time
-	Amount    float64
-	Category  ExpenseCategory
+	Timestamp   time.Time
+	Amount      float64
+	Category    ExpenseCategory
+	Description string
 }

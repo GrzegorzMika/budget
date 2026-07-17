@@ -45,7 +45,12 @@ templ SummaryTab(label string, from string, to string, total float64, expenses [
 						for _, exp := range expenses {
 							<tr>
 								<td>{ exp.Timestamp.Format("2006-01-02") }</td>
-								<td>{ string(exp.Category) }</td>
+								<td>
+									{ string(exp.Category) }
+									if exp.Description != "" {
+										<span class="expense-note">{ exp.Description }</span>
+									}
+								</td>
 								<td>{ fmt.Sprintf("%.2f", exp.Amount) }</td>
 							</tr>
 						}

@@ -65,7 +65,7 @@ func ExpenseTab(categories []string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</select></div><button class=\"submit-button\">Submit Expense</button></form></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</select></div><div class=\"expenses-entry\"><label for=\"description\">Description (optional):</label> <input type=\"text\" id=\"description\" name=\"description\" maxlength=\"500\" placeholder=\"e.g. weekly groceries\"></div><button class=\"submit-button\">Submit Expense</button></form></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

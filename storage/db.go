@@ -19,12 +19,12 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-var saveExpenseQuery = `INSERT INTO expenses (timestamp, amount, category) VALUES ($1, $2, $3)`
+var saveExpenseQuery = `INSERT INTO expenses (timestamp, amount, category, description) VALUES ($1, $2, $3, NULLIF($4, ''))`
 
 func (r *Repository) SaveExpense(ctx context.Context, expense *domain.Expense) error {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
-	_, err := r.db.Exec(newCtx, saveExpenseQuery, expense.Timestamp.Format(time.DateOnly), expense.Amount, string(expense.Category))
+	_, err := r.db.Exec(newCtx, saveExpenseQuery, expense.Timestamp.Format(time.DateOnly), expense.Amount, string(expense.Category), expense.Description)
 	if err != nil {
 		return fmt.Errorf("failed to save expense: %w", err)
 	}
@@ -97,7 +97,7 @@ func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
 
-	rows, err := r.db.Query(newCtx, "SELECT timestamp, amount, category FROM expenses WHERE timestamp >= $1 AND timestamp < $2 ORDER BY timestamp DESC", start, end)
+	rows, err := r.db.Query(newCtx, "SELECT timestamp, amount, category, COALESCE(description, '') FROM expenses WHERE timestamp >= $1 AND timestamp < $2 ORDER BY timestamp DESC", start, end)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query monthly expenses: %w", err)
 	}
@@ -107,7 +107,7 @@ func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.
 	for rows.Next() {
 		exp := &domain.Expense{}
 		var catStr string
-		if err := rows.Scan(&exp.Timestamp, &exp.Amount, &catStr); err != nil {
+		if err := rows.Scan(&exp.Timestamp, &exp.Amount, &catStr, &exp.Description); err != nil {
 			return nil, fmt.Errorf("failed to scan expense: %w", err)
 		}
 		exp.Category = domain.ExpenseCategory(catStr)

@@ -26,10 +26,16 @@ func ExpensesHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
 				return
 			}
 			category := r.FormValue("category")
+			description := strings.TrimSpace(r.FormValue("description"))
+			if len(description) > 500 {
+				http.Error(w, "description must be at most 500 characters", http.StatusBadRequest)
+				return
+			}
 			expense := &domain.Expense{
-				Timestamp: timestamp,
-				Amount:    amount,
-				Category:  domain.ExpenseCategory(category),
+				Timestamp:   timestamp,
+				Amount:      amount,
+				Category:    domain.ExpenseCategory(category),
+				Description: description,
 			}
 			err = app.SaveExpense(r.Context(), expense)
 			if err != nil {

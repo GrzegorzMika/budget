@@ -20,6 +20,10 @@ templ ExpenseTab(categories []string) {
 					}
 				</select>
 			</div>
+			<div class="expenses-entry">
+				<label for="description">Description (optional):</label>
+				<input type="text" id="description" name="description" maxlength="500" placeholder="e.g. weekly groceries"/>
+			</div>
 			<button class="submit-button">Submit Expense</button>
 		</form>
 	</div>

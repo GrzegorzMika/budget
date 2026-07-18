@@ -1,37 +1,71 @@
 package templates
 
-templ Layout(activeTab string) {
+templ Layout(activeTab string, brandSub string) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="pl">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-			<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet"/>
+			<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
 			<link rel="stylesheet" href="/assets/styles.css"/>
 			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
-			<title>Expenses</title>
+			@templ.Raw(themeInitScript)
+			<script src="/assets/app.js" defer></script>
+			<title>Wydatki</title>
 		</head>
 		<body>
-			<div class="app-layout">
-				<aside class="sidebar">
-					<div class="app-badge">
-						<h1 class="header-primary">Expenses</h1>
-					</div>
-					<nav class="side-tabs">
-						<a href="/?tab=expense" class={ "side-tab", templ.KV("active-tab", activeTab == "expense") }>New Expense</a>
-						<a href="/?tab=categories" class={ "side-tab", templ.KV("active-tab", activeTab == "categories") }>Categories</a>
-						<a href="/?tab=summary" class={ "side-tab", templ.KV("active-tab", activeTab == "summary") }>Summary</a>
-					</nav>
-				</aside>
-
-				<main class="main-content">
-					<div class="content-card">
-						{ children... }
-					</div>
-				</main>
-			</div>
+			<main class="screen">
+				<div class="screen-inner">
+					{ children... }
+				</div>
+			</main>
+			<nav class="navbar">
+				<div class="navbrand">Wydatki<small>{ brandSub }</small></div>
+				<a href="/?tab=list" class={ "tabbtn", templ.KV("active", activeTab == "list") }>
+					@iconList()
+					Wydatki
+				</a>
+				<a href="/?tab=add" class={ "tabbtn", templ.KV("active", activeTab == "add") }>
+					@iconPlus()
+					Dodaj
+				</a>
+				<a href="/?tab=categories" class={ "tabbtn", templ.KV("active", activeTab == "categories") }>
+					@iconTag()
+					Kategorie
+				</a>
+				<div class="nav-spacer"></div>
+				<button type="button" class="tabbtn" id="mood-toggle" title="Zmień motyw">
+					@iconSun()
+					@iconMoon()
+					<span class="mood-label"></span>
+				</button>
+			</nav>
 		</body>
 	</html>
+}
+
+// themeInitScript applies the saved mood before first paint to avoid a
+// flash; ?mood=ink|paper overrides for testing and shareable links.
+const themeInitScript = `<script>document.documentElement.dataset.theme=(function(){try{return new URLSearchParams(location.search).get("mood")||localStorage.getItem("mood")||"paper"}catch(e){return "paper"}})();</script>`
+
+templ iconList() {
+	<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+}
+
+templ iconPlus() {
+	<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"></path></svg>
+}
+
+templ iconTag() {
+	<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.5 12.5L12 21l-8-8 .5-8.5L13 4l7.5 7.5z"></path><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"></circle></svg>
+}
+
+templ iconSun() {
+	<svg class="mood-sun" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"></path></svg>
+}
+
+templ iconMoon() {
+	<svg class="mood-moon" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a7 7 0 1 0 11 11z"></path></svg>
 }

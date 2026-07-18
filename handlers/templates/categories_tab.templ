@@ -1,30 +1,72 @@
 package templates
 
-import "net/url"
+import (
+	"net/url"
 
-templ CategoriesTab(categories []string) {
-	<div class="categories-container">
-		<h2 class="section-title">Manage Categories</h2>
-		<ul class="category-list">
-			for _, category := range categories {
-				<li class="category-item">
-					<span class="category-name">{ category }</span>
-					<button 
-						class="delete-button" 
-						title="Delete category"
-						hx-delete={ "/categories?category=" + url.QueryEscape(category) }
-						hx-target="closest li"
-						hx-swap="outerHTML"
-						hx-confirm="Are you sure you want to delete this category?"
-					>✖</button>
-				</li>
-			}
-		</ul>
+	"github.com/GrzegorzMika/budget/domain"
+)
 
-		<form action="/categories" method="POST" class="add-category-form" onsubmit="return confirm('Are you sure you want to add this category?');">
-			<label for="new_category" class="sr-only">New Category</label>
-			<input type="text" id="new_category" name="new_category" placeholder="Add new category..." required/>
-			<button class="submit-button" title="Add">➕</button>
+templ CategoriesTab(categories []domain.Category, editing string) {
+	<div class="tab-pad">
+		<h3>Kategorie</h3>
+		<p class="tab-sub">Twórz i porządkuj kategorie wydatków.</p>
+		<form method="POST" action="/categories" class="card cat-add">
+			<input class="input cat-add-input" name="new_category" placeholder="Nazwa nowej kategorii" required maxlength="100"/>
+			<div class="cat-form-row">
+				@swatches("c1")
+				<button class="btn btn-primary">Dodaj</button>
+			</div>
 		</form>
+		for _, c := range categories {
+			<div class="cat-row">
+				if c.Name == editing {
+					<form method="POST" action="/categories/update" class="cat-edit">
+						<input type="hidden" name="old" value={ c.Name }/>
+						<input class="input" name="name" value={ c.Name } required maxlength="100" aria-label="Nazwa kategorii"/>
+						<div class="cat-form-row">
+							@swatches(c.Color)
+							<div class="cat-edit-actions">
+								<a class="btn btn-secondary" href="/?tab=categories">Anuluj</a>
+								<button class="btn btn-primary">Zapisz</button>
+							</div>
+						</div>
+					</form>
+				} else {
+					<div class="cat-view">
+						<span class={ "dot", "dot-lg", "bg-" + c.Color }></span>
+						<div class="cat-name">{ c.Name }</div>
+						<a class="icon-btn" title={ "Edytuj " + c.Name } href={ templ.URL("/?tab=categories&edit=" + url.QueryEscape(c.Name)) }>
+							@iconPencil()
+						</a>
+						<button
+							type="button"
+							class="icon-btn"
+							title={ "Usuń " + c.Name }
+							hx-delete={ "/categories?category=" + url.QueryEscape(c.Name) }
+							hx-target="closest .cat-row"
+							hx-swap="outerHTML swap:150ms"
+							hx-confirm={ "Usunąć kategorię „" + c.Name + "”?" }
+						>
+							@iconTrash()
+						</button>
+					</div>
+				}
+			</div>
+		}
 	</div>
+}
+
+templ swatches(selected string) {
+	<div class="swatches">
+		for _, cid := range domain.CategoryColorIDs {
+			<label class="swatch">
+				<input type="radio" name="color" value={ cid } checked?={ cid == selected }/>
+				<span class={ "bg-" + cid }></span>
+			</label>
+		}
+	</div>
+}
+
+templ iconPencil() {
+	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18 10l-4-4L4 16v4z"></path><path d="M13 5l4 4"></path></svg>
 }

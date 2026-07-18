@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/GrzegorzMika/budget/domain"
@@ -31,29 +32,39 @@ func (r *Repository) SaveExpense(ctx context.Context, expense *domain.Expense) e
 	return nil
 }
 
+func (r *Repository) DeleteExpense(ctx context.Context, id int64) error {
+	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
+	defer cancel()
+	_, err := r.db.Exec(newCtx, "DELETE FROM expenses WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("failed to delete expense: %w", err)
+	}
+	return nil
+}
+
 func (r *Repository) Ping(ctx context.Context) error {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
 	return r.db.Ping(newCtx)
 }
 
-func (r *Repository) GetCategories(ctx context.Context) ([]domain.ExpenseCategory, error) {
+func (r *Repository) GetCategories(ctx context.Context) ([]domain.Category, error) {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
 
-	rows, err := r.db.Query(newCtx, "SELECT name FROM categories ORDER BY name")
+	rows, err := r.db.Query(newCtx, "SELECT name, color FROM categories ORDER BY name")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query categories: %w", err)
 	}
 	defer rows.Close()
 
-	var categories []domain.ExpenseCategory
+	var categories []domain.Category
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var c domain.Category
+		if err := rows.Scan(&c.Name, &c.Color); err != nil {
 			return nil, fmt.Errorf("failed to scan category: %w", err)
 		}
-		categories = append(categories, domain.ExpenseCategory(name))
+		categories = append(categories, c)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating categories: %w", err)
@@ -61,12 +72,40 @@ func (r *Repository) GetCategories(ctx context.Context) ([]domain.ExpenseCategor
 	return categories, nil
 }
 
-func (r *Repository) AddCategory(ctx context.Context, name string) error {
+func (r *Repository) AddCategory(ctx context.Context, name string, color string) error {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
-	_, err := r.db.Exec(newCtx, "INSERT INTO categories (name) VALUES ($1) ON CONFLICT DO NOTHING", name)
+	_, err := r.db.Exec(newCtx, "INSERT INTO categories (name, color) VALUES ($1, $2) ON CONFLICT DO NOTHING", name, color)
 	if err != nil {
 		return fmt.Errorf("failed to add category: %w", err)
+	}
+	return nil
+}
+
+// UpdateCategory renames and/or recolors a category. Expenses reference
+// categories by name, so a rename must cascade to them atomically.
+func (r *Repository) UpdateCategory(ctx context.Context, oldName string, newName string, color string) error {
+	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
+	defer cancel()
+
+	tx, err := r.db.Begin(newCtx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(newCtx)
+
+	_, err = tx.Exec(newCtx, "UPDATE categories SET name = $2, color = $3 WHERE name = $1", oldName, newName, color)
+	if err != nil {
+		return fmt.Errorf("failed to update category: %w", err)
+	}
+	if oldName != newName {
+		_, err = tx.Exec(newCtx, "UPDATE expenses SET category = $2 WHERE category = $1", oldName, newName)
+		if err != nil {
+			return fmt.Errorf("failed to rename category on expenses: %w", err)
+		}
+	}
+	if err := tx.Commit(newCtx); err != nil {
+		return fmt.Errorf("failed to commit category update: %w", err)
 	}
 	return nil
 }
@@ -81,25 +120,22 @@ func (r *Repository) DeleteCategory(ctx context.Context, name string) error {
 	return nil
 }
 
-func (r *Repository) GetTotal(ctx context.Context, start time.Time, end time.Time) (float64, error) {
+var getExpensesQuery = `
+SELECT id, timestamp, amount, category, COALESCE(description, '')
+FROM expenses
+WHERE timestamp >= $1 AND timestamp < $2
+  AND ($3 = '' OR category ILIKE '%' || $3 || '%' OR COALESCE(description, '') ILIKE '%' || $3 || '%')
+ORDER BY timestamp DESC, id DESC`
+
+// GetExpenses returns expenses in [start, end), optionally filtered by a
+// case-insensitive substring match on category or description.
+func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.Time, query string) ([]*domain.Expense, error) {
 	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
 	defer cancel()
 
-	var total float64
-	err := r.db.QueryRow(newCtx, "SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE timestamp >= $1 AND timestamp < $2", start, end).Scan(&total)
+	rows, err := r.db.Query(newCtx, getExpensesQuery, start, end, escapeLike(query))
 	if err != nil {
-		return 0, fmt.Errorf("failed to query monthly total: %w", err)
-	}
-	return total, nil
-}
-
-func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.Time) ([]*domain.Expense, error) {
-	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
-	defer cancel()
-
-	rows, err := r.db.Query(newCtx, "SELECT timestamp, amount, category, COALESCE(description, '') FROM expenses WHERE timestamp >= $1 AND timestamp < $2 ORDER BY timestamp DESC", start, end)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query monthly expenses: %w", err)
+		return nil, fmt.Errorf("failed to query expenses: %w", err)
 	}
 	defer rows.Close()
 
@@ -107,7 +143,7 @@ func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.
 	for rows.Next() {
 		exp := &domain.Expense{}
 		var catStr string
-		if err := rows.Scan(&exp.Timestamp, &exp.Amount, &catStr, &exp.Description); err != nil {
+		if err := rows.Scan(&exp.ID, &exp.Timestamp, &exp.Amount, &catStr, &exp.Description); err != nil {
 			return nil, fmt.Errorf("failed to scan expense: %w", err)
 		}
 		exp.Category = domain.ExpenseCategory(catStr)
@@ -117,4 +153,9 @@ func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.
 		return nil, fmt.Errorf("error iterating expenses: %w", err)
 	}
 	return expenses, nil
+}
+
+// escapeLike neutralizes LIKE wildcards in user-provided search text.
+func escapeLike(s string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(s)
 }

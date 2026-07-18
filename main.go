@@ -51,6 +51,7 @@ func main() {
 			addCategory(w, r)
 		}
 	})
+	http.HandleFunc("/categories/update", handlers.UpdateCategoryHandlerBuilder(app))
 
 	http.Handle("/assets/", handlers.StaticFileHandlerBuilder(app))
 	http.Handle("/healthz", handlers.HealthcheckHandlerBuilder(app))

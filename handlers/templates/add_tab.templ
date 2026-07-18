@@ -1,0 +1,67 @@
+package templates
+
+import "github.com/GrzegorzMika/budget/domain"
+
+templ AddTab(categories []domain.Category, today string, saved bool) {
+	<div class="tab-pad">
+		<h3>Nowy wydatek</h3>
+		if saved {
+			<div class="save-note">✓ Zapisano wydatek</div>
+		}
+		<form method="POST" action="/expenses" class="add-form">
+			<div class="eyebrow-sm">Kwota</div>
+			<div class="amount-row">
+				<input
+					class="amt amount-input"
+					name="amount"
+					inputmode="decimal"
+					placeholder="0,00"
+					autocomplete="off"
+					required
+					pattern="[0-9\s ]+([.,][0-9]{1,2})?"
+					title="Kwota, np. 12,50"
+				/>
+				<span class="amount-cur">zł</span>
+			</div>
+			<div class="eyebrow-sm eyebrow-gap">Kategoria</div>
+			<div class="catpicker" id="catpicker">
+				<input type="hidden" name="category" value=""/>
+				<button type="button" class="catpicker-btn">
+					<span class="dot dot-empty"></span>
+					<span class="catpicker-name placeholder">Wybierz kategorię</span>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="catpicker-chevron"><path d="M6 9l6 6 6-6"></path></svg>
+				</button>
+				<div class="catpicker-pop" hidden>
+					<div class="catpicker-search">
+						<input class="input" type="search" placeholder="Szukaj kategorii…" aria-label="Szukaj kategorii"/>
+					</div>
+					<div class="catpicker-list">
+						for _, c := range categories {
+							<button
+								type="button"
+								class="catpicker-opt"
+								data-name={ c.Name }
+								data-color={ c.Color }
+							>
+								<span class={ "dot", "bg-" + c.Color }></span>
+								<span class="catpicker-opt-name">{ c.Name }</span>
+							</button>
+						}
+					</div>
+					<div class="catpicker-empty" hidden>Brak pasujących kategorii</div>
+				</div>
+			</div>
+			<div class="add-row">
+				<div class="field">
+					<label for="date">Data</label>
+					<input class="input" id="date" type="date" name="date" value={ today } required/>
+				</div>
+			</div>
+			<div class="field field-gap">
+				<label for="description">Opis (opcjonalny)</label>
+				<input class="input" id="description" name="description" maxlength="500" placeholder="np. Biedronka, obiad z zespołem…"/>
+			</div>
+			<button class="btn btn-primary btn-block add-save">Zapisz wydatek</button>
+		</form>
+	</div>
+}

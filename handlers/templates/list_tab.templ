@@ -1,0 +1,65 @@
+package templates
+
+templ ListTab(label string, totalFmt string, countLabel string, q string, from string, to string, filtersActive bool, groups []DayGroup) {
+	<div class="list-hero">
+		<div class="eyebrow">{ label }</div>
+		<div class="total-line">
+			<span class="amt total-big">{ totalFmt }</span>
+			<span class="total-cur">zł</span>
+		</div>
+		<div class="hero-sub">{ countLabel }</div>
+	</div>
+	<form method="GET" action="/" class="list-filters">
+		<input type="hidden" name="tab" value="list"/>
+		<div class="filters-search">
+			<input class="input" type="search" name="q" placeholder="Szukaj wydatków…" aria-label="Szukaj wydatków" value={ q } onchange="this.form.submit()"/>
+		</div>
+		<div class="filters-range">
+			<div class="field">
+				<label for="from">Od</label>
+				<input class="input" id="from" type="date" name="from" value={ from } onchange="this.form.submit()"/>
+			</div>
+			<div class="field">
+				<label for="to">Do</label>
+				<input class="input" id="to" type="date" name="to" value={ to } onchange="this.form.submit()"/>
+			</div>
+			if filtersActive {
+				<a class="btn btn-ghost" href="/?tab=list">Wyczyść</a>
+			}
+		</div>
+	</form>
+	<div class="feed">
+		if len(groups) == 0 {
+			<div class="feed-empty">Brak wydatków. Dodaj pierwszy w zakładce „Dodaj”.</div>
+		}
+		for _, g := range groups {
+			<div class="day-label">{ g.Label }</div>
+			for _, e := range g.Items {
+				<div class="feed-row">
+					<span class={ "dot", "bg-" + e.Color }></span>
+					<div class="feed-main">
+						<div class="feed-title">{ e.Title }</div>
+						if e.Subtitle != "" {
+							<div class="feed-sub">{ e.Subtitle }</div>
+						}
+					</div>
+					<span class="amt feed-amt">{ e.AmountFmt } zł</span>
+					<button
+						type="button"
+						class="del"
+						title="Usuń wydatek"
+						aria-label="Usuń wydatek"
+						hx-delete={ "/expenses?id=" + e.ID }
+						hx-confirm="Usunąć ten wydatek?"
+					>
+						@iconTrash()
+					</button>
+				</div>
+			}
+		}
+	</div>
+}
+
+templ iconTrash() {
+	<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>
+}

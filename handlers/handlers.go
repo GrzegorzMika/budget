@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,11 +21,17 @@ func LandingPageHandlerBuilder(app *controllers.AppController) http.HandlerFunc 
 
 		var tabComponent templ.Component
 		switch tab {
-		case "list", "summary":
-			tab = "list"
+		case "list":
 			component, err := buildListTab(r, app, now)
 			if err != nil {
 				http.Error(w, "Failed to load expenses: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			tabComponent = component
+		case "summary":
+			component, err := buildSummaryTab(r, app, now)
+			if err != nil {
+				http.Error(w, "Failed to load summary: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			tabComponent = component
@@ -40,7 +48,15 @@ func LandingPageHandlerBuilder(app *controllers.AppController) http.HandlerFunc 
 	}
 }
 
-func buildListTab(r *http.Request, app *controllers.AppController, now time.Time) (templ.Component, error) {
+// period is a user-selected date range, defaulting to the current month.
+// from and to are inclusive; end() converts to the exclusive upper bound the
+// repository expects.
+type period struct {
+	from, to           time.Time
+	fromGiven, toGiven bool
+}
+
+func parsePeriod(r *http.Request, now time.Time) period {
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	monthEnd := monthStart.AddDate(0, 1, -1)
 
@@ -50,11 +66,45 @@ func buildListTab(r *http.Request, app *controllers.AppController, now time.Time
 		from, to = to, from
 		fromGiven, toGiven = toGiven, fromGiven
 	}
-	query := strings.TrimSpace(r.URL.Query().Get("q"))
-	rangeActive := fromGiven || toGiven
+	return period{from: from, to: to, fromGiven: fromGiven, toGiven: toGiven}
+}
 
-	// "to" is inclusive; the repository takes an exclusive upper bound
-	expenses, err := app.GetExpenses(r.Context(), from, to.AddDate(0, 0, 1), query)
+func (p period) active() bool { return p.fromGiven || p.toGiven }
+
+func (p period) end() time.Time { return p.to.AddDate(0, 0, 1) }
+
+func (p period) label(now time.Time) string {
+	switch {
+	case p.fromGiven && p.toGiven:
+		return templates.DayLabel(p.from) + " – " + templates.DayLabel(p.to)
+	case p.fromGiven:
+		return "od " + templates.DayLabel(p.from)
+	case p.toGiven:
+		return "do " + templates.DayLabel(p.to)
+	default:
+		return templates.MonthTitle(now)
+	}
+}
+
+func (p period) fromValue() string {
+	if p.fromGiven {
+		return p.from.Format(time.DateOnly)
+	}
+	return ""
+}
+
+func (p period) toValue() string {
+	if p.toGiven {
+		return p.to.Format(time.DateOnly)
+	}
+	return ""
+}
+
+func buildListTab(r *http.Request, app *controllers.AppController, now time.Time) (templ.Component, error) {
+	p := parsePeriod(r, now)
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+
+	expenses, err := app.GetExpenses(r.Context(), p.from, p.end(), query)
 	if err != nil {
 		return nil, err
 	}
@@ -64,20 +114,11 @@ func buildListTab(r *http.Request, app *controllers.AppController, now time.Time
 		total += e.Amount
 	}
 
-	label := templates.MonthTitle(now)
-	period := "wydane w tym miesiącu"
-	if rangeActive {
-		period = "wydane w wybranym okresie"
-		switch {
-		case fromGiven && toGiven:
-			label = templates.DayLabel(from) + " – " + templates.DayLabel(to)
-		case fromGiven:
-			label = "od " + templates.DayLabel(from)
-		default:
-			label = "do " + templates.DayLabel(to)
-		}
+	periodText := "wydane w tym miesiącu"
+	if p.active() {
+		periodText = "wydane w wybranym okresie"
 	}
-	countLabel := period + " · " + strconv.Itoa(len(expenses)) + " " + templates.PluralEntries(len(expenses))
+	countLabel := periodText + " · " + strconv.Itoa(len(expenses)) + " " + templates.PluralEntries(len(expenses))
 
 	colors := make(map[string]string)
 	for _, c := range app.GetCategories() {
@@ -110,15 +151,106 @@ func buildListTab(r *http.Request, app *controllers.AppController, now time.Time
 		})
 	}
 
-	fromValue, toValue := "", ""
-	if fromGiven {
-		fromValue = from.Format(time.DateOnly)
-	}
-	if toGiven {
-		toValue = to.Format(time.DateOnly)
+	return templates.ListTab(p.label(now), templates.FormatAmount(total), countLabel, query, p.fromValue(), p.toValue(), p.active() || query != "", groups), nil
+}
+
+func buildSummaryTab(r *http.Request, app *controllers.AppController, now time.Time) (templ.Component, error) {
+	p := parsePeriod(r, now)
+
+	totals, err := app.GetCategoryTotals(r.Context(), p.from, p.end())
+	if err != nil {
+		return nil, err
 	}
 
-	return templates.ListTab(label, templates.FormatAmount(total), countLabel, query, fromValue, toValue, rangeActive || query != "", groups), nil
+	// Category selection defaults to all. Submitted filter forms carry a
+	// catsel=1 marker so "every pill unchecked" is distinguishable from
+	// "no category filter in the URL at all".
+	q := r.URL.Query()
+	catFiltered := q.Get("catsel") == "1" || len(q["cat"]) > 0
+	selected := make(map[string]bool, len(q["cat"]))
+	for _, name := range q["cat"] {
+		selected[name] = true
+	}
+
+	colors := make(map[string]string)
+	for _, c := range app.GetCategories() {
+		colors[c.Name] = c.Color
+	}
+	colorOf := func(name string) string {
+		if color, ok := colors[name]; ok {
+			return color
+		}
+		return domain.NeutralCategoryColor
+	}
+
+	options := make([]templates.SummaryOption, 0, len(totals))
+	var included []domain.CategoryTotal
+	total, entries := 0.0, 0
+	for _, t := range totals {
+		on := !catFiltered || selected[t.Category]
+		options = append(options, templates.SummaryOption{Name: t.Category, Color: colorOf(t.Category), Checked: on})
+		if on {
+			included = append(included, t)
+			total += t.Total
+			entries += t.Count
+		}
+	}
+
+	rows := make([]templates.SummaryRow, 0, len(included))
+	slices := make([]templates.DonutSlice, 0, len(included))
+	start := 0.0
+	for _, t := range included {
+		frac := t.Total / total
+		rows = append(rows, templates.SummaryRow{
+			Name:      t.Category,
+			Color:     colorOf(t.Category),
+			AmountFmt: templates.FormatAmount(t.Total),
+			Percent:   formatPercent(frac),
+		})
+		slices = append(slices, donutSlice(colorOf(t.Category), frac, start, len(included)))
+		start += frac
+	}
+
+	countLabel := strconv.Itoa(entries) + " " + templates.PluralEntries(entries) +
+		" · " + strconv.Itoa(len(included)) + " " + templates.PluralCategories(len(included))
+
+	return templates.SummaryTab(
+		p.label(now), templates.FormatAmount(total), countLabel,
+		p.fromValue(), p.toValue(), p.active() || catFiltered,
+		options, slices, rows,
+	), nil
+}
+
+// Donut geometry: slices are stroke dash segments on an r=40 circle in a
+// 100×100 viewBox; the template rotates the group -90° so the first slice
+// starts at 12 o'clock.
+const donutCircumference = 2 * math.Pi * 40
+
+// donutGap is the hairline gap between adjacent slices, in viewBox units.
+const donutGap = 1.6
+
+func donutSlice(color string, frac, start float64, sliceCount int) templates.DonutSlice {
+	length := frac * donutCircumference
+	gap := donutGap
+	if sliceCount < 2 || length < 2*donutGap {
+		gap = 0
+	}
+	visible := length - gap
+	return templates.DonutSlice{
+		Color:  color,
+		Dash:   fmt.Sprintf("%.3f %.3f", visible, donutCircumference-visible),
+		Offset: fmt.Sprintf("%.3f", -(start*donutCircumference + gap/2)),
+	}
+}
+
+// formatPercent renders a fraction of the total as an integer percentage,
+// with "<1%" for slivers that would round to nothing.
+func formatPercent(frac float64) string {
+	pct := frac * 100
+	if pct < 1 {
+		return "<1%"
+	}
+	return strconv.Itoa(int(math.Round(pct))) + "%"
 }
 
 func ExpensesHandlerBuilder(app *controllers.AppController) http.HandlerFunc {

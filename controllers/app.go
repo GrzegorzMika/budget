@@ -17,6 +17,7 @@ type Repository interface {
 	DeleteCategory(ctx context.Context, name string) error
 	Ping(ctx context.Context) error
 	GetExpenses(ctx context.Context, start time.Time, end time.Time, query string) ([]*domain.Expense, error)
+	GetCategoryTotals(ctx context.Context, start time.Time, end time.Time) ([]domain.CategoryTotal, error)
 }
 
 type AppController struct {
@@ -91,4 +92,10 @@ func (c *AppController) Ping(ctx context.Context) error {
 // query, newest first.
 func (c *AppController) GetExpenses(ctx context.Context, start time.Time, end time.Time, query string) ([]*domain.Expense, error) {
 	return c.repository.GetExpenses(ctx, start, end, query)
+}
+
+// GetCategoryTotals returns per-category expense aggregates in [start, end),
+// largest total first.
+func (c *AppController) GetCategoryTotals(ctx context.Context, start time.Time, end time.Time) ([]domain.CategoryTotal, error) {
+	return c.repository.GetCategoryTotals(ctx, start, end)
 }

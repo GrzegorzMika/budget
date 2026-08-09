@@ -19,6 +19,29 @@
 		});
 	}
 
+	// Summary tab: keep URLs canonical. When every category pill is checked
+	// the selection equals the default, so drop it from the query string —
+	// otherwise a date-only change would freeze the category list and hide
+	// categories that only appear in the newly chosen period.
+	var sumform = document.getElementById('summary-filters');
+	if (sumform) {
+		var pillInputs = function () {
+			return Array.prototype.slice.call(sumform.querySelectorAll('input[name="cat"], input[name="catsel"]'));
+		};
+		sumform.addEventListener('submit', function () {
+			var pills = pillInputs();
+			var allChecked = pills.every(function (p) { return p.name !== 'cat' || p.checked; });
+			if (allChecked) {
+				pills.forEach(function (p) { p.disabled = true; });
+			}
+		});
+		// Back/forward cache can restore the page with the inputs still
+		// disabled; re-enable them so the pills stay clickable.
+		window.addEventListener('pageshow', function () {
+			pillInputs().forEach(function (p) { p.disabled = false; });
+		});
+	}
+
 	// Searchable category picker on the add-expense form.
 	var picker = document.getElementById('catpicker');
 	if (picker) {

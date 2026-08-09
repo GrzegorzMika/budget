@@ -20,6 +20,13 @@ type Category struct {
 	Color string
 }
 
+// CategoryTotal is an aggregate of expenses for one category over a period.
+type CategoryTotal struct {
+	Category string
+	Total    float64
+	Count    int
+}
+
 // CategoryColorIDs is the fixed palette from the design system; categories
 // store one of these ids and the UI maps them to swatch colors via CSS.
 var CategoryColorIDs = []string{

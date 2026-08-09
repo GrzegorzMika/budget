@@ -27,6 +27,10 @@ templ Layout(activeTab string, brandSub string) {
 					@iconList()
 					Wydatki
 				</a>
+				<a href="/?tab=summary" class={ "tabbtn", templ.KV("active", activeTab == "summary") }>
+					@iconChart()
+					Podsumowanie
+				</a>
 				<a href="/?tab=add" class={ "tabbtn", templ.KV("active", activeTab == "add") }>
 					@iconPlus()
 					Dodaj
@@ -52,6 +56,10 @@ const themeInitScript = `<script>document.documentElement.dataset.theme=(functio
 
 templ iconList() {
 	<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+}
+
+templ iconChart() {
+	<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
 }
 
 templ iconPlus() {

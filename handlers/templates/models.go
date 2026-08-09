@@ -21,6 +21,29 @@ type DayGroup struct {
 	Items []FeedItem
 }
 
+// SummaryOption is one category filter pill on the summary tab.
+type SummaryOption struct {
+	Name    string
+	Color   string
+	Checked bool
+}
+
+// SummaryRow is one legend entry next to the summary donut.
+type SummaryRow struct {
+	Name      string
+	Color     string
+	AmountFmt string
+	Percent   string
+}
+
+// DonutSlice is one pre-computed arc of the summary donut: a stroke dash
+// pattern and offset for the r=40 circle in the 100×100 viewBox.
+type DonutSlice struct {
+	Color  string
+	Dash   string
+	Offset string
+}
+
 var monthsNominative = [...]string{
 	"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
 	"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
@@ -73,4 +96,15 @@ func PluralEntries(n int) string {
 		return "wpisy"
 	}
 	return "wpisów"
+}
+
+// PluralCategories returns the Polish plural form of "kategoria" for n.
+func PluralCategories(n int) string {
+	if n == 1 {
+		return "kategoria"
+	}
+	if m := n % 10; m >= 2 && m <= 4 && !(n%100 >= 12 && n%100 <= 14) {
+		return "kategorie"
+	}
+	return "kategorii"
 }

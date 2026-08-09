@@ -1,0 +1,76 @@
+package templates
+
+templ SummaryTab(label string, totalFmt string, countLabel string, from string, to string, filtersActive bool, options []SummaryOption, slices []DonutSlice, rows []SummaryRow) {
+	<div class="list-hero">
+		<div class="eyebrow">{ label }</div>
+		<div class="hero-sub">{ countLabel }</div>
+	</div>
+	<form method="GET" action="/" class="list-filters" id="summary-filters">
+		<input type="hidden" name="tab" value="summary"/>
+		<input type="hidden" name="catsel" value="1"/>
+		<div class="filters-range">
+			<div class="field">
+				<label for="from">Od</label>
+				<input class="input" id="from" type="date" name="from" value={ from } onchange="this.form.requestSubmit()"/>
+			</div>
+			<div class="field">
+				<label for="to">Do</label>
+				<input class="input" id="to" type="date" name="to" value={ to } onchange="this.form.requestSubmit()"/>
+			</div>
+			if filtersActive {
+				<a class="btn btn-ghost" href="/?tab=summary">Wyczyść</a>
+			}
+		</div>
+		if len(options) > 0 {
+			<div class="pills">
+				for _, o := range options {
+					<label class="pill">
+						<input type="checkbox" name="cat" value={ o.Name } checked?={ o.Checked } onchange="this.form.requestSubmit()"/>
+						<span class="pill-body">
+							<span class={ "dot", "bg-" + o.Color }></span>
+							{ o.Name }
+						</span>
+					</label>
+				}
+			</div>
+		}
+	</form>
+	if len(options) == 0 {
+		<div class="feed-empty">Brak wydatków w wybranym okresie.</div>
+	} else if len(rows) == 0 {
+		<div class="feed-empty">Wybierz przynajmniej jedną kategorię.</div>
+	} else {
+		<div class="sum-chart">
+			<div class="donut-wrap">
+				<svg class="donut" viewBox="0 0 100 100" aria-hidden="true">
+					<g transform="rotate(-90 50 50)">
+						for _, s := range slices {
+							<circle
+								class={ "donut-slice", "stroke-" + s.Color }
+								cx="50"
+								cy="50"
+								r="40"
+								stroke-dasharray={ s.Dash }
+								stroke-dashoffset={ s.Offset }
+							></circle>
+						}
+					</g>
+				</svg>
+				<div class="donut-center">
+					<span class="amt donut-total">{ totalFmt }</span>
+					<span class="donut-cur">zł</span>
+				</div>
+			</div>
+			<div class="legend">
+				for _, row := range rows {
+					<div class="legend-row">
+						<span class={ "dot", "bg-" + row.Color }></span>
+						<span class="legend-name">{ row.Name }</span>
+						<span class="legend-pct">{ row.Percent }</span>
+						<span class="amt legend-amt">{ row.AmountFmt } zł</span>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}

@@ -155,6 +155,39 @@ func (r *Repository) GetExpenses(ctx context.Context, start time.Time, end time.
 	return expenses, nil
 }
 
+var getCategoryTotalsQuery = `
+SELECT category, SUM(amount), COUNT(*)
+FROM expenses
+WHERE timestamp >= $1 AND timestamp < $2
+GROUP BY category
+ORDER BY SUM(amount) DESC, category`
+
+// GetCategoryTotals aggregates expenses in [start, end) per category,
+// largest total first.
+func (r *Repository) GetCategoryTotals(ctx context.Context, start time.Time, end time.Time) ([]domain.CategoryTotal, error) {
+	newCtx, cancel := context.WithTimeout(ctx, DB_TIMEOUT*time.Second)
+	defer cancel()
+
+	rows, err := r.db.Query(newCtx, getCategoryTotalsQuery, start, end)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query category totals: %w", err)
+	}
+	defer rows.Close()
+
+	var totals []domain.CategoryTotal
+	for rows.Next() {
+		var t domain.CategoryTotal
+		if err := rows.Scan(&t.Category, &t.Total, &t.Count); err != nil {
+			return nil, fmt.Errorf("failed to scan category total: %w", err)
+		}
+		totals = append(totals, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating category totals: %w", err)
+	}
+	return totals, nil
+}
+
 // escapeLike neutralizes LIKE wildcards in user-provided search text.
 func escapeLike(s string) string {
 	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(s)

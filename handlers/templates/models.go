@@ -13,6 +13,7 @@ type FeedItem struct {
 	Subtitle  string
 	Color     string
 	AmountFmt string
+	Negative  bool
 }
 
 // DayGroup is a day's worth of feed rows under a shared date label.
@@ -28,12 +29,14 @@ type SummaryOption struct {
 	Checked bool
 }
 
-// SummaryRow is one legend entry next to the summary donut.
+// SummaryRow is one legend entry next to the summary donut. Negative marks
+// a category whose refunds outweigh its expenses in the period.
 type SummaryRow struct {
 	Name      string
 	Color     string
 	AmountFmt string
 	Percent   string
+	Negative  bool
 }
 
 // DonutSlice is one pre-computed arc of the summary donut: a stroke dash

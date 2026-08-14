@@ -1,6 +1,6 @@
 module github.com/GrzegorzMika/budget
 
-go 1.26.5
+go 1.26.6
 
 require github.com/a-h/templ v0.3.1020
 
@@ -15,5 +15,5 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 )

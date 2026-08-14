@@ -36,12 +36,12 @@ func AddTab(categories []domain.Category, today string, saved bool) templ.Compon
 			return templ_7745c5c3_Err
 		}
 		if saved {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"save-note\">✓ Zapisano wydatek</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"save-note\">✓ Zapisano</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<form method=\"POST\" action=\"/expenses\" class=\"add-form\"><div class=\"eyebrow-sm\">Kwota</div><div class=\"amount-row\"><input class=\"amt amount-input\" name=\"amount\" inputmode=\"decimal\" placeholder=\"0,00\" autocomplete=\"off\" required pattern=\"[0-9\\s ]+([.,][0-9]{1,2})?\" title=\"Kwota, np. 12,50\"> <span class=\"amount-cur\">zł</span></div><div class=\"eyebrow-sm eyebrow-gap\">Kategoria</div><div class=\"catpicker\" id=\"catpicker\"><input type=\"hidden\" name=\"category\" value=\"\"> <button type=\"button\" class=\"catpicker-btn\"><span class=\"dot dot-empty\"></span> <span class=\"catpicker-name placeholder\">Wybierz kategorię</span> <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" class=\"catpicker-chevron\"><path d=\"M6 9l6 6 6-6\"></path></svg></button><div class=\"catpicker-pop\" hidden><div class=\"catpicker-search\"><input class=\"input\" type=\"search\" placeholder=\"Szukaj kategorii…\" aria-label=\"Szukaj kategorii\"></div><div class=\"catpicker-list\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<form method=\"POST\" action=\"/expenses\" class=\"add-form\"><div class=\"eyebrow-row\"><div class=\"eyebrow-sm\">Kwota</div><div class=\"kind-toggle\" role=\"radiogroup\" aria-label=\"Rodzaj wpisu\"><label class=\"kind-opt\"><input type=\"radio\" name=\"kind\" value=\"expense\" checked> <span>Wydatek</span></label> <label class=\"kind-opt\"><input type=\"radio\" name=\"kind\" value=\"refund\"> <span>Zwrot</span></label></div></div><div class=\"amount-row\"><input class=\"amt amount-input\" name=\"amount\" inputmode=\"decimal\" placeholder=\"0,00\" autocomplete=\"off\" required pattern=\"-?[0-9\\s ]+([.,][0-9]{1,2})?\" title=\"Kwota, np. 12,50\"> <span class=\"amount-cur\">zł</span></div><div class=\"eyebrow-sm eyebrow-gap\">Kategoria</div><div class=\"catpicker\" id=\"catpicker\"><input type=\"hidden\" name=\"category\" value=\"\"> <button type=\"button\" class=\"catpicker-btn\"><span class=\"dot dot-empty\"></span> <span class=\"catpicker-name placeholder\">Wybierz kategorię</span> <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" class=\"catpicker-chevron\"><path d=\"M6 9l6 6 6-6\"></path></svg></button><div class=\"catpicker-pop\" hidden><div class=\"catpicker-search\"><input class=\"input\" type=\"search\" placeholder=\"Szukaj kategorii…\" aria-label=\"Szukaj kategorii\"></div><div class=\"catpicker-list\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -53,7 +53,7 @@ func AddTab(categories []domain.Category, today string, saved bool) templ.Compon
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 43, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 55, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 			if templ_7745c5c3_Err != nil {
@@ -66,7 +66,7 @@ func AddTab(categories []domain.Category, today string, saved bool) templ.Compon
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(c.Color)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 44, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 56, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
@@ -101,7 +101,7 @@ func AddTab(categories []domain.Category, today string, saved bool) templ.Compon
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(c.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 47, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 59, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -119,13 +119,13 @@ func AddTab(categories []domain.Category, today string, saved bool) templ.Compon
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(today)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 57, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `handlers/templates/add_tab.templ`, Line: 69, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" required></div></div><div class=\"field field-gap\"><label for=\"description\">Opis (opcjonalny)</label> <input class=\"input\" id=\"description\" name=\"description\" maxlength=\"500\" placeholder=\"np. Biedronka, obiad z zespołem…\"></div><button class=\"btn btn-primary btn-block add-save\">Zapisz wydatek</button></form></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" required></div></div><div class=\"field field-gap\"><label for=\"description\">Opis (opcjonalny)</label> <input class=\"input\" id=\"description\" name=\"description\" maxlength=\"500\" placeholder=\"np. Biedronka, obiad z zespołem…\"></div><button class=\"btn btn-primary btn-block add-save\"><span class=\"save-label-expense\">Zapisz wydatek</span> <span class=\"save-label-refund\">Zapisz zwrot</span></button></form></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

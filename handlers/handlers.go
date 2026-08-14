@@ -148,6 +148,7 @@ func buildListTab(r *http.Request, app *controllers.AppController, now time.Time
 			Subtitle:  subtitle,
 			Color:     color,
 			AmountFmt: templates.FormatAmount(e.Amount),
+			Negative:  e.Amount < 0,
 		})
 	}
 
@@ -196,19 +197,35 @@ func buildSummaryTab(r *http.Request, app *controllers.AppController, now time.T
 		}
 	}
 
+	// Refunds can drive a category's net total to zero or below; such
+	// categories stay in the legend but cannot be drawn as arcs, so slice
+	// shares are computed over the net-positive sum only.
+	positiveSum, positiveCount := 0.0, 0
+	for _, t := range included {
+		if t.Total > 0 {
+			positiveSum += t.Total
+			positiveCount++
+		}
+	}
+
 	rows := make([]templates.SummaryRow, 0, len(included))
-	slices := make([]templates.DonutSlice, 0, len(included))
+	slices := make([]templates.DonutSlice, 0, positiveCount)
 	start := 0.0
 	for _, t := range included {
-		frac := t.Total / total
-		rows = append(rows, templates.SummaryRow{
+		row := templates.SummaryRow{
 			Name:      t.Category,
 			Color:     colorOf(t.Category),
 			AmountFmt: templates.FormatAmount(t.Total),
-			Percent:   formatPercent(frac),
-		})
-		slices = append(slices, donutSlice(colorOf(t.Category), frac, start, len(included)))
-		start += frac
+			Percent:   "–",
+			Negative:  t.Total < 0,
+		}
+		if t.Total > 0 {
+			frac := t.Total / positiveSum
+			row.Percent = formatPercent(frac)
+			slices = append(slices, donutSlice(colorOf(t.Category), frac, start, positiveCount))
+			start += frac
+		}
+		rows = append(rows, row)
 	}
 
 	countLabel := strconv.Itoa(entries) + " " + templates.PluralEntries(entries) +
@@ -267,6 +284,11 @@ func ExpensesHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
 				http.Error(w, "nieprawidłowa kwota", http.StatusBadRequest)
 				return
 			}
+			// The Zwrot toggle forces a refund regardless of the typed sign;
+			// otherwise a hand-typed minus is honored as-is.
+			if r.FormValue("kind") == "refund" {
+				amount = -math.Abs(amount)
+			}
 			category := strings.TrimSpace(r.FormValue("category"))
 			if category == "" {
 				http.Error(w, "kategoria jest wymagana", http.StatusBadRequest)
@@ -310,16 +332,18 @@ func ExpensesHandlerBuilder(app *controllers.AppController) http.HandlerFunc {
 }
 
 // parseAmount accepts Polish decimal notation ("12,50", "1 142,86").
+// Negative amounts are allowed — they record returns; only zero and
+// non-finite values are rejected.
 func parseAmount(raw string) (float64, error) {
 	s := strings.TrimSpace(raw)
 	s = strings.ReplaceAll(s, " ", "")
-	s = strings.ReplaceAll(s, " ", "")
+	s = strings.ReplaceAll(s, " ", "") // non-breaking space, as rendered by FormatAmount
 	s = strings.ReplaceAll(s, ",", ".")
 	amount, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return 0, err
 	}
-	if amount <= 0 {
+	if amount == 0 || math.IsNaN(amount) || math.IsInf(amount, 0) {
 		return 0, strconv.ErrRange
 	}
 	return amount, nil

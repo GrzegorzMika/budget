@@ -43,7 +43,7 @@ templ ListTab(label string, totalFmt string, countLabel string, q string, from s
 							<div class="feed-sub">{ e.Subtitle }</div>
 						}
 					</div>
-					<span class="amt feed-amt">{ e.AmountFmt } zł</span>
+					<span class={ "amt", "feed-amt", templ.KV("amt-refund", e.Negative) }>{ e.AmountFmt } zł</span>
 					<button
 						type="button"
 						class="del"
